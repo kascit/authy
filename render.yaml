@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: authy
+    runtime: node
+    plan: free
+    buildCommand: pnpm install
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TOTP_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: COOKIE_DOMAIN
+        value: .dhanur.me
+      - key: ALLOWED_ORIGINS
+        value: https://dhanur.me,https://auth.dhanur.me,https://tasks.dhanur.me,https://linkr.dhanur.me

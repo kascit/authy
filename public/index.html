@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authenticate — dhanur.me</title>
+  <meta name="description" content="Authentication portal for dhanur.me services">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script
+      src="https://dhanur.me/motherland.js"
+      data-mode="long"
+      data-theme="dark"
+      data-position="top-left"
+      data-size="40px"
+      data-gap="1rem"
+      data-animate="true"
+    ></script>
+</head>
+<body>
+  <main id="app">
+    <!-- LOADING -->
+    <div class="state" id="stateLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- OTP INPUT -->
+    <div class="state hidden" id="stateInput">
+      <div class="otp-wrap" id="otpWrap">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="0" autocomplete="one-time-code" aria-label="Digit 1">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="1" aria-label="Digit 2">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="2" aria-label="Digit 3">
+        <div class="otp-sep"></div>
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="3" aria-label="Digit 4">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="4" aria-label="Digit 5">
+        <input type="text" inputmode="numeric" maxlength="1" class="otp" data-idx="5" aria-label="Digit 6">
+      </div>
+      <p class="msg hidden" id="msg"></p>
+    </div>
+
+    <!-- AUTHORIZED -->
+    <div class="state hidden" id="stateAuthorized">
+      <svg class="check" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

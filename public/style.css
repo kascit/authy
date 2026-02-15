@@ -1,0 +1,169 @@
+/* ===== RESET ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===== THEME TOKENS ===== */
+:root {
+  --bg: #fafafa;
+  --fg: #111;
+  --fg2: #666;
+  --otp-bg: #fff;
+  --otp-border: #d4d4d8;
+  --otp-focus: #111;
+  --otp-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+  --err: #dc2626;
+  --ok: #16a34a;
+  --sep: #d4d4d8;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a;
+    --fg: #e5e5e5;
+    --fg2: #737373;
+    --otp-bg: #171717;
+    --otp-border: #2a2a2a;
+    --otp-focus: #e5e5e5;
+    --otp-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+    --err: #ef4444;
+    --ok: #22c55e;
+    --sep: #333;
+  }
+}
+
+/* ===== BASE ===== */
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== LAYOUT ===== */
+#app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.state { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.state.hidden { display: none; }
+
+/* ===== SPINNER ===== */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--otp-border);
+  border-top-color: var(--fg2);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== OTP INPUTS ===== */
+.otp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.3s ease both;
+}
+
+.otp-sep {
+  width: 12px;
+  height: 2px;
+  background: var(--sep);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.otp {
+  width: 52px;
+  height: 64px;
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--fg);
+  background: var(--otp-bg);
+  border: 1.5px solid var(--otp-border);
+  border-radius: 12px;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.otp:focus {
+  border-color: var(--otp-focus);
+  box-shadow: var(--otp-shadow);
+}
+
+.otp.filled {
+  border-color: var(--fg2);
+}
+
+.otp.error {
+  border-color: var(--err);
+  animation: shake 0.35s ease;
+}
+
+.otp.success {
+  border-color: var(--ok);
+}
+
+.otp.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ===== MESSAGE ===== */
+.msg {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--err);
+  text-align: center;
+  animation: fadeIn 0.2s ease both;
+}
+.msg.hidden { display: none; }
+
+/* ===== CHECK ===== */
+.check {
+  color: var(--ok);
+  animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 400px) {
+  .otp {
+    width: 44px;
+    height: 56px;
+    font-size: 20px;
+    border-radius: 10px;
+  }
+  .otp-wrap { gap: 6px; }
+  .otp-sep { width: 8px; }
+}
