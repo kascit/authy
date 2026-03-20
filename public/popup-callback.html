@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authenticating - auth.dhanur.me</title>
+  </head>
+  <body>
+    <main id="app" class="flex items-center justify-center min-h-[60vh] p-6">
+      <div class="flex flex-col items-center gap-4" id="stateLoading">
+        <span class="loading loading-spinner loading-md"></span>
+        <p class="text-sm text-base-content/70 text-center">
+          Completing sign-in...
+        </p>
+      </div>
+      <div class="flex flex-col items-center gap-4 hidden" id="stateError">
+        <div class="alert alert-error max-w-sm">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <span>Authentication failed.</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="window.close()">
+          Close
+        </button>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get("error")) {
+          document.getElementById("stateLoading").classList.add("hidden");
+          document.getElementById("stateError").classList.remove("hidden");
+          if (window.opener) {
+            window.opener.postMessage(
+              { type: "auth-error", error: params.get("error") },
+              "*",
+            );
+          }
+          return;
+        }
+
+        if (window.opener) {
+          window.opener.postMessage({ type: "auth-login-success" }, "*");
+          setTimeout(function () {
+            window.close();
+          }, 300);
+        } else {
+          window.location.href = "/";
+        }
+      })();
+    </script>
+    <script>
+      window.SiteNavConfig = {
+        mode: "navbar",
+        nav: [],
+        badge: { text: "AUTH", class: "badge-primary" },
+        showSearch: false,
+        showAppsGrid: false,
+        showThemeToggle: false,
+      };
+    </script>
+    <script src="https://dhanur.me/js/components.js" defer></script>
+  </body>
+</html>

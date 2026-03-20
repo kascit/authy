@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Verification - auth.dhanur.me</title>
+  </head>
+  <body class="bg-base-100 text-base-content">
+    <main
+      id="app"
+      class="relative flex items-center justify-center min-h-[calc(100vh-4.5rem)] p-4 sm:p-6"
+    >
+      <div class="pointer-events-none absolute inset-0 opacity-40">
+        <div
+          class="absolute -top-24 left-1/2 -translate-x-1/2 w-[36rem] h-52 rounded-full bg-base-300 blur-3xl"
+        ></div>
+      </div>
+
+      <div class="flex flex-col items-center gap-4" id="stateLoading">
+        <span class="loading loading-spinner loading-md"></span>
+      </div>
+
+      <div
+        class="flex flex-col items-center gap-4 hidden"
+        id="stateNotLoggedIn"
+      >
+        <div class="alert alert-warning max-w-md">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>You must be signed in first.</span>
+        </div>
+        <a href="/login" class="btn btn-primary btn-sm">Go To Login</a>
+      </div>
+
+      <div
+        class="flex flex-col items-center gap-4 hidden"
+        id="stateAlreadyAdmin"
+      >
+        <div class="alert alert-success max-w-md">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Already admin. Redirecting to dashboard...</span>
+        </div>
+      </div>
+
+      <div
+        class="flex flex-col items-center gap-4 hidden w-full max-w-md"
+        id="stateInput"
+      >
+        <div
+          class="card bg-base-100 border border-base-300 shadow-2xl w-full max-w-xl"
+        >
+          <div class="card-body">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="card-title text-3xl">Admin Verification</h2>
+              <span class="badge badge-outline">TOTP</span>
+            </div>
+
+            <p class="text-sm text-base-content/70 mt-1">
+              Enter the 6-digit code from your authenticator.
+            </p>
+
+            <div class="alert bg-base-200 border border-base-300 text-sm mt-1">
+              <i class="fa-solid fa-lock text-success"></i>
+              <span
+                >Code is valid once and grants admin for a limited
+                duration.</span
+              >
+            </div>
+
+            <div
+              class="flex items-center justify-center gap-1.5 sm:gap-2 mt-2"
+              id="otpWrap"
+            >
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="0"
+                autocomplete="one-time-code"
+                aria-label="Digit 1"
+              />
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="1"
+                aria-label="Digit 2"
+              />
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="2"
+                aria-label="Digit 3"
+              />
+              <span class="text-base-content/40 px-1">-</span>
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="3"
+                aria-label="Digit 4"
+              />
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="4"
+                aria-label="Digit 5"
+              />
+              <input
+                type="text"
+                inputmode="numeric"
+                maxlength="1"
+                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
+                data-idx="5"
+                aria-label="Digit 6"
+              />
+            </div>
+
+            <p
+              class="text-sm font-medium text-error hidden text-center"
+              id="msg"
+            ></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center gap-4 hidden" id="stateSuccess">
+        <div class="alert alert-success max-w-md">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Admin access granted.</span>
+        </div>
+      </div>
+    </main>
+
+    <script src="verify.js"></script>
+    <script>
+      window.SiteNavConfig = {
+        nav: [
+          {
+            name: "Login",
+            url: "/login",
+            icon: "fa-solid fa-right-to-bracket",
+          },
+          { name: "Admin Verify", url: "/verify", icon: "fa-solid fa-shield" },
+        ],
+        badge: { text: "AUTH", class: "badge-primary" },
+        showSearch: false,
+        showAppsGrid: true,
+        showThemeToggle: true,
+      };
+    </script>
+    <script src="https://dhanur.me/js/shell.js" defer></script>
+  </body>
+</html>
