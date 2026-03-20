@@ -21,4 +21,11 @@
   } else {
     window.location.href = "/";
   }
+
+  var btnClose = document.getElementById("btnClose");
+  if (btnClose) {
+    btnClose.addEventListener("click", function() {
+      window.close();
+    });
+  }
 })();
