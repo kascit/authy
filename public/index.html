@@ -9,11 +9,13 @@
   <body class="bg-base-100 text-base-content">
     <main
       id="app"
-      class="relative flex items-center justify-center min-h-[calc(100vh-4.5rem)] p-4 sm:p-6 overflow-hidden"
+      class="relative flex items-center justify-center min-h-[calc(100vh-4.5rem)] p-4 sm:p-6"
     >
-      <!-- Decorative glows -->
-      <div class="login-glow glow-1"></div>
-      <div class="login-glow glow-2"></div>
+      <!-- Decorative glows wrapper out of flow to prevent scrollbars -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-[100px]"></div>
+        <div class="absolute -bottom-32 -right-24 w-[400px] h-[250px] bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-[100px]"></div>
+      </div>
 
       <!-- Loading state -->
       <div class="state flex flex-col items-center gap-4" id="stateLoading">
@@ -27,7 +29,7 @@
         id="stateLogin"
       >
         <div
-          class="login-card card bg-base-100/80 border border-base-content/8 shadow-2xl w-full max-w-md"
+          class="card glass bg-base-100/60 dark:bg-base-200/50 border border-white/20 dark:border-white/5 shadow-2xl w-full max-w-md backdrop-blur-xl transition-all"
         >
           <div class="card-body gap-0">
             <!-- Header -->
@@ -52,9 +54,9 @@
             <!-- Primary Provider Button -->
             <button
               id="primaryLoginBtn"
-              class="provider-btn btn btn-primary btn-lg w-full gap-3 hidden"
+              class="btn btn-primary btn-lg w-full gap-3 hidden shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
             >
-              <span id="primaryProviderIcon" class="provider-icon"></span>
+              <span id="primaryProviderIcon" class="w-5 h-5 flex-shrink-0 flex items-center justify-center"></span>
               <span>Continue with <span id="primaryProviderName" class="font-semibold"></span></span>
             </button>
 
@@ -64,8 +66,8 @@
             </div>
 
             <!-- Other Providers Dropdown -->
-            <details class="dropdown w-full" id="otherProvidersDropdown">
-              <summary class="btn btn-ghost btn-sm w-full gap-2 border border-base-content/10 hover:border-base-content/20">
+            <details class="dropdown dropdown-top w-full" id="otherProvidersDropdown">
+              <summary class="btn btn-ghost btn-sm w-full gap-2 border border-base-content/10 bg-base-200/30 hover:bg-base-200 hover:border-base-content/20 transition-colors">
                 <svg
                   class="w-4 h-4 opacity-50"
                   fill="none"
