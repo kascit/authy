@@ -5,94 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In — auth.dhanur.me</title>
     <meta name="description" content="Sign in to your dhanur.me account. One account for all dhanur.me services." />
+    <!-- Required for FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- 1. The Configuration Object (must be synchronously before shell.js) -->
+    <script src="site-nav-config.js"></script>
+
+    <!-- 2. The Abyssal Integration Script -->
+    <script src="https://dhanur.me/js/shell.js" defer></script>
   </head>
-  <body class="bg-base-100 text-base-content">
+  <body>
+    <!-- The shell.js will automatically wrap this main element within a .drawer context -->
     <main
       id="app"
-      class="relative flex items-center justify-center min-h-[calc(100vh-4.5rem)] p-4 sm:p-6"
+      class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-6rem)]"
     >
-      <!-- Decorative glows wrapper out of flow to prevent scrollbars -->
-      <div class="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-[100px]"></div>
-        <div class="absolute -bottom-32 -right-24 w-[400px] h-[250px] bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-[100px]"></div>
-      </div>
-
       <!-- Loading state -->
       <div class="state flex flex-col items-center gap-4" id="stateLoading">
         <span class="loading loading-spinner loading-md"></span>
-        <span class="text-sm opacity-50">Checking session...</span>
+        <span class="text-sm text-base-content/60">Checking session...</span>
       </div>
 
       <!-- Login state -->
       <div
-        class="state hidden flex flex-col items-center gap-4"
+        class="state hidden flex flex-col items-center gap-4 w-full"
         id="stateLogin"
       >
-        <div
-          class="card glass bg-base-100/60 dark:bg-base-200/50 border border-white/20 dark:border-white/5 shadow-2xl w-full max-w-md backdrop-blur-xl transition-all"
-        >
-          <div class="card-body gap-0">
+        <div class="project-card w-full md:max-w-md">
+          <div class="p-6 md:p-8">
             <!-- Header -->
-            <div class="text-center mb-4">
-              <div class="inline-flex items-center gap-2 mb-3">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <i class="fa-solid fa-fingerprint text-primary text-lg"></i>
-                </div>
+            <div class="text-center mb-6">
+              <div class="inline-flex items-center justify-center gap-2 mb-4">
+                <i class="fa-solid fa-fingerprint text-base-content text-4xl"></i>
               </div>
-              <h1 class="text-2xl font-bold tracking-tight">Welcome back</h1>
-              <p class="text-sm text-base-content/50 mt-1">
-                Sign in to access all <span class="text-base-content/70 font-medium">dhanur.me</span> services
+              <h1 class="text-3xl font-bold tracking-tight mb-2">Welcome back</h1>
+              <p class="text-base-content/85">
+                Sign in to access all <span class="font-semibold text-base-content">dhanur.me</span> services
               </p>
             </div>
 
             <!-- Security badge -->
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-200/60 border border-base-content/5 text-xs mb-4">
-              <div class="pulse-dot"></div>
-              <span class="opacity-60">Secure single sign-on · Multi-provider</span>
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-200/40 border border-base-content/10 text-xs text-base-content/85 mb-6">
+              <div class="pulse-dot bg-success"></div>
+              <span>Secure single sign-on · Multi-provider</span>
             </div>
 
             <!-- Primary Provider Button -->
             <button
               id="primaryLoginBtn"
-              class="btn btn-primary btn-lg w-full gap-3 hidden shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+              class="btn bg-base-content text-base-100 hover:bg-base-content/90 border-none btn-lg w-full gap-3 hidden transition-all mb-4"
             >
               <span id="primaryProviderIcon" class="w-5 h-5 flex-shrink-0 flex items-center justify-center"></span>
-              <span>Continue with <span id="primaryProviderName" class="font-semibold"></span></span>
+              <span>Continue with <span id="primaryProviderName" class="font-bold"></span></span>
             </button>
 
             <!-- Divider -->
-            <div class="divider text-xs opacity-30 my-3" id="loginDivider">
+            <div class="divider text-xs text-base-content/60 my-4 uppercase tracking-wider font-semibold" id="loginDivider">
               other options
             </div>
 
             <!-- Other Providers Dropdown -->
             <details class="dropdown dropdown-top w-full" id="otherProvidersDropdown">
-              <summary class="btn btn-ghost btn-sm w-full gap-2 border border-base-content/10 bg-base-200/30 hover:bg-base-200 hover:border-base-content/20 transition-colors">
-                <svg
-                  class="w-4 h-4 opacity-50"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-                <span class="text-sm">More providers</span>
+              <summary class="btn btn-ghost btn-md w-full gap-2 border border-base-content/10 bg-base-200/40 hover:bg-base-200 hover:border-base-content/30 transition-colors">
+                <i class="fa-solid fa-bars opacity-50"></i>
+                <span class="text-sm font-semibold">More providers</span>
               </summary>
               <ul
                 id="otherProvidersList"
-                class="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-box w-full mt-2 border border-base-content/10 z-[100]"
+                class="dropdown-content menu p-2 shadow-xl bg-base-200 border border-base-content/10 rounded-box w-full mt-2 z-[100]"
               ></ul>
             </details>
 
-            <p class="text-sm font-medium text-error hidden mt-3 text-center" id="loginMsg"></p>
+            <p class="text-sm font-semibold text-error hidden mt-4 text-center" id="loginMsg"></p>
 
             <!-- Footer hint -->
-            <p class="text-[11px] text-base-content/30 text-center mt-4">
+            <p class="text-[11px] text-base-content/60 text-center mt-6">
               By signing in, you get 100 free credits/month across all services
             </p>
           </div>
@@ -101,117 +88,94 @@
 
       <!-- Authenticated state -->
       <div
-        class="state hidden flex flex-col items-center gap-4 w-full max-w-5xl"
+        class="state hidden flex flex-col items-center gap-4 w-full md:max-w-3xl"
         id="stateAuthenticated"
       >
-        <div class="login-card card bg-base-100/80 border border-base-content/8 shadow-2xl w-full">
-          <div class="card-body gap-4">
+        <div class="project-card w-full">
+          <div class="p-6 md:p-8 flex flex-col gap-6">
             <!-- User info -->
-            <div class="flex items-start gap-3">
-              <div class="avatar mt-0.5">
-                <div
-                  class="w-14 rounded-full ring ring-primary/30 ring-offset-base-100 ring-offset-2"
-                >
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div class="avatar">
+                <div class="w-16 h-16 rounded-full border border-base-content/20 bg-base-200 overflow-hidden">
                   <img id="userAvatar" src="" alt="" />
                 </div>
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-semibold text-lg truncate" id="userName"></div>
-                <div
-                  class="text-sm text-base-content/70 truncate"
-                  id="userEmail"
-                ></div>
+                <div class="font-extrabold text-2xl truncate mb-1" id="userName"></div>
+                <div class="text-sm text-base-content/60 truncate font-mono" id="userEmail"></div>
                 <div class="flex flex-wrap gap-2 mt-3">
-                  <span class="badge badge-outline text-xs">Account Center</span>
-                  <span class="badge badge-outline text-xs" id="linkedCountBadge"
-                    >0 linked</span
-                  >
+                  <span class="badge badge-outline border-base-content/30 text-xs font-semibold">Account Center</span>
+                  <span class="badge badge-outline border-base-content/30 text-xs font-semibold" id="linkedCountBadge">0 linked</span>
                 </div>
               </div>
-              <div id="roleBadge" class="badge ml-auto"></div>
+              <div id="roleBadge" class="badge bg-base-content text-base-100 border-none font-bold px-3 py-3"></div>
             </div>
 
             <!-- Credits display -->
-            <div class="credits-pill flex items-center justify-between px-4 py-2.5 rounded-xl" id="creditsDisplay">
-              <div class="flex items-center gap-2">
-                <span class="text-lg">🪙</span>
+            <div class="flex items-center justify-between px-5 py-4 rounded-xl bg-base-200/40 border border-base-content/10" id="creditsDisplay">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">🪙</span>
                 <div>
-                  <div class="text-sm font-semibold" id="creditsBalance">—</div>
-                  <div class="text-[11px] opacity-50" id="creditsLabel">credits remaining</div>
+                  <div class="text-base font-bold text-base-content" id="creditsBalance">—</div>
+                  <div class="text-xs text-base-content/60 font-semibold uppercase tracking-wider mt-0.5" id="creditsLabel">credits remaining</div>
                 </div>
               </div>
-              <div class="text-[11px] opacity-40" id="creditsReset"></div>
+              <div class="text-[10px] text-base-content/60 font-medium tracking-wide uppercase" id="creditsReset"></div>
             </div>
 
             <!-- Linked accounts -->
             <div class="w-full" id="accountsSection">
-              <h3
-                class="text-xs font-semibold uppercase tracking-wider opacity-50 mb-2"
-              >
+              <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 border-b border-base-content/10 pb-2">
                 Linked Accounts
               </h3>
-              <div id="linkedAccounts" class="flex flex-col gap-1.5"></div>
-              <div
-                id="availableProviders"
-                class="flex flex-col gap-1.5 mt-2"
-              ></div>
+              <div id="linkedAccounts" class="flex flex-col gap-2"></div>
+              <div id="availableProviders" class="flex flex-col gap-2 mt-3"></div>
             </div>
 
             <!-- Admin Dashboard -->
             <div class="w-full hidden" id="adminDashboard">
-              <div class="divider text-xs opacity-50 mb-3 mt-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 mt-6 border-b border-base-content/10 pb-2">
                 Admin Dashboard
-              </div>
+              </h3>
 
-              <div
-                class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"
-                id="adminStats"
-              >
-                <div
-                  class="dashboard-stat bg-base-200/60 border border-base-content/5 rounded-xl p-4"
-                >
-                  <div class="text-xs opacity-50 mb-1">
-                    Logged-In Users
-                  </div>
-                  <div class="text-2xl font-bold" id="statLoggedInUsers">
-                    -
-                  </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" id="adminStats">
+                <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center">
+                  <div class="text-xs text-base-content/60 font-semibold uppercase mb-1">Logged-In Users</div>
+                  <div class="text-3xl font-extrabold text-base-content" id="statLoggedInUsers">-</div>
                 </div>
-                <div
-                  class="dashboard-stat bg-base-200/60 border border-base-content/5 rounded-xl p-4"
-                >
-                  <div class="text-xs opacity-50 mb-1">Active Admins</div>
-                  <div class="text-2xl font-bold" id="statActiveAdmins">-</div>
+                <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center">
+                  <div class="text-xs text-base-content/60 font-semibold uppercase mb-1">Active Admins</div>
+                  <div class="text-3xl font-extrabold text-base-content" id="statActiveAdmins">-</div>
                 </div>
               </div>
 
-              <div class="bg-base-200/60 border border-base-content/5 rounded-xl p-4">
-                <div class="flex items-center justify-between gap-2">
-                  <h3 class="text-sm font-semibold">Live Summary</h3>
-                  <button class="btn btn-ghost btn-xs" id="refreshSummary">
-                    <i class="fa-solid fa-arrows-rotate text-xs"></i> Refresh
+              <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-5">
+                <div class="flex items-center justify-between gap-2 border-b border-base-content/10 pb-3 mb-3">
+                  <h3 class="text-sm font-bold text-base-content">Live Summary</h3>
+                  <button class="nav-button text-xs font-bold px-3 py-1.5 rounded-md hover:bg-base-200 transition-colors" id="refreshSummary">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
                   </button>
                 </div>
-                <p class="text-xs opacity-50 mt-2">
+                <p class="text-xs text-base-content/85 font-medium">
                   Snapshot of currently valid sessions.
                 </p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                  <a href="/verify" class="btn btn-primary btn-sm"
-                    >Re-Verify Admin</a
-                  >
-                  <a href="/login" class="btn btn-ghost btn-sm"
-                    >Switch Account</a
-                  >
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <a href="/verify" class="btn btn-sm bg-base-content text-base-100 hover:bg-base-content/90 border-none font-bold">
+                    Re-Verify Admin
+                  </a>
+                  <a href="/login" class="btn btn-ghost btn-sm border border-base-content/20 hover:bg-base-200 font-bold">
+                    Switch Account
+                  </a>
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-2 w-full mt-1">
-              <button class="btn btn-primary btn-sm" id="btnUpgrade">
-                <i class="fa-solid fa-shield-halved mr-1"></i>Upgrade to Admin
+            <div class="flex flex-col sm:flex-row gap-3 w-full mt-4 pt-4 border-t border-base-content/10">
+              <button class="btn btn-sm bg-base-content text-base-100 hover:bg-base-content/90 border-none font-bold px-6" id="btnUpgrade">
+                <i class="fa-solid fa-shield-halved mr-2"></i>Upgrade to Admin
               </button>
-              <button class="btn btn-ghost btn-sm border border-base-content/10" id="btnLogout">
-                <i class="fa-solid fa-right-from-bracket mr-1"></i>Sign Out
+              <button class="btn btn-ghost btn-sm border border-base-content/20 hover:bg-base-200 font-bold px-6" id="btnLogout">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i>Sign Out
               </button>
             </div>
           </div>
@@ -220,7 +184,5 @@
     </main>
 
     <script src="app.js"></script>
-    <script src="site-nav-config.js"></script>
-    <script src="https://dhanur.me/js/shell.js" defer></script>
   </body>
 </html>

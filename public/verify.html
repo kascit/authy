@@ -4,143 +4,80 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Verification - auth.dhanur.me</title>
-
+    <!-- Required for FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="site-nav-config.js"></script>
+    <script src="https://dhanur.me/js/shell.js" defer></script>
   </head>
-  <body class="bg-base-100 text-base-content">
+  <body>
+    <!-- The shell.js will automatically wrap this main element within a .drawer context -->
     <main
       id="app"
-      class="relative flex items-center justify-center min-h-[calc(100vh-4.5rem)] p-4 sm:p-6"
+      class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[calc(100vh-6rem)]"
     >
-      <div class="pointer-events-none absolute inset-0 opacity-40">
-        <div
-          class="absolute -top-24 left-1/2 -translate-x-1/2 w-[36rem] h-52 rounded-full bg-base-300 blur-3xl"
-        ></div>
-      </div>
-
-      <div class="flex flex-col items-center gap-4" id="stateLoading">
+      <div class="flex flex-col items-center gap-4 w-full" id="stateLoading">
         <span class="loading loading-spinner loading-md"></span>
+        <p class="text-sm font-semibold text-base-content/60">Checking status...</p>
       </div>
 
-      <div
-        class="flex flex-col items-center gap-4 hidden"
-        id="stateNotLoggedIn"
-      >
-        <div class="alert alert-warning max-w-md">
-          <i class="fa-solid fa-circle-exclamation"></i>
-          <span>You must be signed in first.</span>
-        </div>
-        <a href="/login" class="btn btn-primary btn-sm">Go To Login</a>
-      </div>
-
-      <div
-        class="flex flex-col items-center gap-4 hidden"
-        id="stateAlreadyAdmin"
-      >
-        <div class="alert alert-success max-w-md">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Already admin. Redirecting to dashboard...</span>
+      <div class="flex flex-col items-center gap-4 hidden w-full" id="stateNotLoggedIn">
+        <div class="project-card md:max-w-md w-full p-6 md:p-8 text-center border-l-4 border-warning">
+          <i class="fa-solid fa-circle-exclamation text-warning text-4xl mb-4"></i>
+          <h2 class="font-bold text-xl mb-4 text-base-content">You must be signed in first.</h2>
+          <p class="text-base-content/85 mb-6 text-sm">Please log in to your account to verify admin credentials.</p>
+          <a href="/login" class="btn bg-base-content text-base-100 hover:bg-base-content/90 border-none w-full font-bold">Go To Login</a>
         </div>
       </div>
 
-      <div
-        class="flex flex-col items-center gap-4 hidden w-full max-w-md"
-        id="stateInput"
-      >
-        <div
-          class="card bg-base-100 border border-base-300 shadow-2xl w-full max-w-xl"
-        >
-          <div class="card-body">
-            <div class="flex items-center justify-between gap-3">
-              <h2 class="card-title text-3xl">Admin Verification</h2>
-              <span class="badge badge-outline">TOTP</span>
+      <div class="flex flex-col items-center gap-4 hidden w-full" id="stateAlreadyAdmin">
+        <div class="project-card md:max-w-md w-full p-6 md:p-8 text-center border-l-4 border-success">
+          <i class="fa-solid fa-circle-check text-success text-4xl mb-4"></i>
+          <h2 class="font-bold text-xl text-base-content">Already admin. Redirecting to dashboard...</h2>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center gap-4 hidden w-full md:max-w-xl" id="stateInput">
+        <div class="project-card w-full">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <h2 class="text-3xl font-extrabold tracking-tight">Verification</h2>
+              <span class="badge badge-outline border-base-content/30 font-bold px-3 py-3">TOTP</span>
             </div>
 
-            <p class="text-sm text-base-content/70 mt-1">
-              Enter the 6-digit code from your authenticator.
+            <p class="text-base-content/85 mb-6 text-sm">
+              Enter the 6-digit code from your authenticator app to authorize this session.
             </p>
 
-            <div class="alert bg-base-200 border border-base-300 text-sm mt-1">
-              <i class="fa-solid fa-lock text-success"></i>
-              <span
-                >Code is valid once and grants admin for a limited
-                duration.</span
-              >
+            <div class="flex items-start gap-3 bg-base-200/40 border border-base-content/10 p-4 rounded-xl mb-8">
+              <i class="fa-solid fa-shield-halved text-base-content mt-0.5 text-lg"></i>
+              <p class="text-sm text-base-content/85 font-medium leading-relaxed">
+                Code is valid once and grants admin for a limited duration globally across all services.
+              </p>
             </div>
 
-            <div
-              class="flex items-center justify-center gap-1.5 sm:gap-2 mt-2"
-              id="otpWrap"
-            >
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="0"
-                autocomplete="one-time-code"
-                aria-label="Digit 1"
-              />
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="1"
-                aria-label="Digit 2"
-              />
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="2"
-                aria-label="Digit 3"
-              />
-              <span class="text-base-content/40 px-1">-</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="3"
-                aria-label="Digit 4"
-              />
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="4"
-                aria-label="Digit 5"
-              />
-              <input
-                type="text"
-                inputmode="numeric"
-                maxlength="1"
-                class="otp input input-bordered w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold"
-                data-idx="5"
-                aria-label="Digit 6"
-              />
+            <div class="flex items-center justify-center gap-2 sm:gap-4 mb-8" id="otpWrap">
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="0" autocomplete="one-time-code" aria-label="Digit 1" />
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="1" aria-label="Digit 2" />
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="2" aria-label="Digit 3" />
+              <span class="text-base-content/40 px-1 font-bold">-</span>
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="3" aria-label="Digit 4" />
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="4" aria-label="Digit 5" />
+              <input type="text" inputmode="numeric" maxlength="1" class="otp input input-bordered border-base-content/30 bg-base-200/40 focus:border-base-content focus:ring-1 focus:ring-base-content w-10 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg" data-idx="5" aria-label="Digit 6" />
             </div>
 
-            <p
-              class="text-sm font-medium text-error hidden text-center"
-              id="msg"
-            ></p>
+            <p class="text-sm font-bold text-error hidden text-center" id="msg"></p>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-col items-center gap-4 hidden" id="stateSuccess">
-        <div class="alert alert-success max-w-md">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Admin access granted.</span>
+      <div class="flex flex-col items-center gap-4 hidden w-full" id="stateSuccess">
+        <div class="project-card md:max-w-md w-full p-6 md:p-8 text-center border-l-4 border-success">
+          <i class="fa-solid fa-circle-check text-success text-4xl mb-4"></i>
+          <h2 class="font-bold text-xl text-base-content">Admin access granted successfully.</h2>
         </div>
       </div>
     </main>
 
     <script src="verify.js"></script>
-    <script src="site-nav-config.js"></script>
-    <script src="https://dhanur.me/js/shell.js" defer></script>
   </body>
 </html>
