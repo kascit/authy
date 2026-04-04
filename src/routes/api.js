@@ -163,7 +163,7 @@ function renderSetupHtml({ secret_base32, otpauth_url, qr_code }) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TOTP Setup — auth.dhanur.me</title>
   <script src="/site-nav-config.js"></script>
-  <script src="https://dhanur.me/js/shell.js" defer></script>
+  <script type="module" src="https://dhanur.me/js/shell.js"></script>
 </head>
 <body>
   <main id="app" class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[calc(100vh-6rem)]">
