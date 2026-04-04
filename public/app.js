@@ -310,9 +310,24 @@
     if (!dateStr) return "";
     try {
       var d = new Date(dateStr);
-      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
       return months[d.getUTCMonth()] + " " + d.getUTCDate();
-    } catch (e) { return ""; }
+    } catch (e) {
+      return "";
+    }
   }
 
   async function loadCreditsDisplay(authData) {
@@ -341,7 +356,9 @@
     } else {
       creditsBalance.textContent = credits.balance;
       creditsLabel.textContent = "credits remaining";
-      creditsReset.textContent = credits.periodEnd ? "resets " + formatDate(credits.periodEnd) : "";
+      creditsReset.textContent = credits.periodEnd
+        ? "resets " + formatDate(credits.periodEnd)
+        : "";
     }
     creditsDisplay.classList.remove("hidden");
   }
@@ -385,11 +402,30 @@
     }
   }
 
+  // ==================== Toast ====================
+
+  function showToast(id) {
+    var toast = document.getElementById(id);
+    if (!toast) return;
+    toast.classList.remove("hidden");
+    setTimeout(function () {
+      toast.classList.add("hidden");
+    }, 4000);
+  }
+
   // ==================== Init ====================
 
   async function init() {
     var params = new URLSearchParams(window.location.search);
     var currentPath = window.location.pathname;
+
+    // Show toast if just elevated to admin
+    if (params.get("elevated") === "1") {
+      showToast("adminToast");
+      // Clean up URL
+      var newUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, "", newUrl);
+    }
 
     if (params.get("error")) {
       loginMsg.textContent = "Authentication failed. Please try again.";

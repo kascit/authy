@@ -4,6 +4,7 @@
   var stateLoading = document.getElementById("stateLoading");
   var stateNotLoggedIn = document.getElementById("stateNotLoggedIn");
   var stateAlreadyAdmin = document.getElementById("stateAlreadyAdmin");
+  var stateSetupRequired = document.getElementById("stateSetupRequired");
   var stateInput = document.getElementById("stateInput");
   var stateSuccess = document.getElementById("stateSuccess");
   var otpInputs = Array.from(document.querySelectorAll(".otp"));
@@ -16,6 +17,7 @@
       stateLoading,
       stateNotLoggedIn,
       stateAlreadyAdmin,
+      stateSetupRequired,
       stateInput,
       stateSuccess,
     ].forEach(function (s) {
@@ -25,7 +27,7 @@
   }
 
   function showMsg(text) {
-    msg.textContent = text;
+    msg.textContent = text || "Invalid code. Please try again.";
     msg.classList.remove("hidden");
   }
 
@@ -145,7 +147,7 @@
           } else {
             show(stateSuccess);
             setTimeout(function () {
-              window.location.href = "/";
+              window.location.href = "/?elevated=1";
             }, 900);
           }
         }, 300);
@@ -200,8 +202,22 @@
       return;
     }
 
-    show(stateInput);
-    otpInputs[0].focus();
+    // Check if TOTP is configured
+    var setupRes = await fetch(API + "/api/setup", {
+      method: "HEAD",
+      credentials: "include",
+    }).catch(function () {
+      return { ok: false };
+    });
+
+    if (setupRes.status === 403) {
+      // TOTP already configured, show input form
+      show(stateInput);
+      otpInputs[0].focus();
+    } else {
+      // TOTP not configured
+      show(stateSetupRequired);
+    }
   }
 
   init();

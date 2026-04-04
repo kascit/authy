@@ -10,19 +10,32 @@
   </head>
   <body>
     <!-- The shell.js will automatically wrap this main element within a .drawer context -->
-    <main id="app" class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[60vh]">
+    <main
+      id="app"
+      class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[60vh]"
+    >
       <div class="flex flex-col items-center gap-4" id="stateLoading">
         <span class="loading loading-spinner loading-md"></span>
         <p class="text-sm font-semibold text-base-content/85 text-center">
           Completing sign-in process...
         </p>
       </div>
-      <div class="flex flex-col items-center gap-4 hidden w-full" id="stateError">
-        <div class="project-card p-6 md:p-8 border-l-4 border-error md:max-w-sm w-full text-center">
-          <i class="fa-solid fa-circle-xmark text-error text-4xl mb-4"></i>
-          <h2 class="font-bold text-xl mb-2 text-base-content">Authentication failed</h2>
-          <p class="text-sm text-base-content/60 mb-6">There was an issue processing your login.</p>
-          <button class="btn bg-base-content text-base-100 hover:bg-base-content/90 border-none w-full font-bold" id="btnClose">
+      <div
+        class="flex flex-col items-center gap-4 hidden w-full"
+        id="stateError"
+      >
+        <div
+          class="alert alert-error md:max-w-sm w-full flex-col items-center text-center gap-2"
+        >
+          <i class="fa-solid fa-circle-xmark text-xl"></i>
+          <div>
+            <h3 class="font-bold">Authentication failed</h3>
+            <p class="text-sm">There was an issue processing your login.</p>
+          </div>
+          <p class="text-xs opacity-70">
+            Closing in <span id="closeCountdown">3</span>s
+          </p>
+          <button class="btn btn-sm btn-primary" id="btnClose">
             Close Window
           </button>
         </div>

@@ -60,7 +60,12 @@ router.get("/status", async (req, res) => {
     const session = await validateSession(token);
 
     if (!session) {
-      return res.json({ authenticated: false, role: "guest", user: null, credits: null });
+      return res.json({
+        authenticated: false,
+        role: "guest",
+        user: null,
+        credits: null,
+      });
     }
 
     // Admin gets unlimited credits, regular users get actual balance
@@ -84,7 +89,12 @@ router.get("/status", async (req, res) => {
     });
   } catch (err) {
     console.error("Status check error:", err.message);
-    res.json({ authenticated: false, role: "guest", user: null, credits: null });
+    res.json({
+      authenticated: false,
+      role: "guest",
+      user: null,
+      credits: null,
+    });
   }
 });
 
@@ -145,12 +155,74 @@ router.post("/verify", verifyLimiter, async (req, res) => {
   }
 });
 
+function renderSetupHtml({ secret_base32, otpauth_url, qr_code }) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TOTP Setup — auth.dhanur.me</title>
+  <script src="/site-nav-config.js"></script>
+  <script src="https://dhanur.me/js/shell.js" defer></script>
+</head>
+<body>
+  <main id="app" class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[calc(100vh-6rem)]">
+    <div class="project-card w-full md:max-w-md">
+      <div class="p-6 md:p-8">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h1 class="text-2xl font-bold tracking-tight">TOTP Setup</h1>
+          <span class="badge badge-outline badge-sm border-base-content/30 font-bold">ADMIN</span>
+        </div>
+
+        <div class="flex items-start gap-3 bg-base-200/40 border border-base-content/10 p-4 rounded-xl mb-6">
+          <i class="fa-solid fa-circle-info text-base-content mt-0.5 text-lg"></i>
+          <p class="text-sm text-base-content/85 font-medium leading-relaxed">
+            Scan the QR code with your authenticator app, then set <code class="bg-base-300 px-1.5 py-0.5 rounded text-xs font-mono">TOTP_SECRET</code> as an environment variable.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 mb-6 flex items-center justify-center">
+          <img src="${qr_code}" alt="TOTP QR code" class="w-48 h-48 rounded-lg" />
+        </div>
+
+        <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 mb-6">
+          <div class="text-xs text-base-content/60 font-semibold uppercase mb-2">Secret Key</div>
+          <code class="block text-sm font-mono text-base-content break-all">${secret_base32}</code>
+        </div>
+
+        <a href="${otpauth_url}" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm w-full font-bold mb-4">
+          <i class="fa-solid fa-external-link mr-2"></i>Open in Authenticator App
+        </a>
+
+        <p class="text-xs text-base-content/60 text-center">
+          Refresh to regenerate a new secret. Keep this key secure and don't share it.
+        </p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>`;
+}
+
 // GET /api/setup — first-time TOTP QR code
 router.get("/setup", async (req, res) => {
+  const wantsJson =
+    req.query?.json === "1" ||
+    req.accepts(["json", "html"]) === "json" ||
+    req.get("Accept")?.includes("application/json");
+
   if (process.env.TOTP_SECRET) {
-    return res.status(403).json({
+    const payload = {
       error: "Setup already complete. TOTP_SECRET is configured.",
-    });
+    };
+
+    if (wantsJson) {
+      return res.status(403).json(payload);
+    }
+
+    return res
+      .status(403)
+      .send(`<p>Setup already complete. TOTP_SECRET is configured.</p>`);
   }
 
   try {
@@ -163,16 +235,25 @@ router.get("/setup", async (req, res) => {
       await logActivity("setup", ip, ua, true, "TOTP secret generated");
     } catch (_) {}
 
-    res.json({
+    const payload = {
       message:
         "Scan the QR code with your authenticator app, then set TOTP_SECRET as an environment variable.",
       secret_base32: secret.base32,
       otpauth_url: secret.otpauth_url,
       qr_code: qrDataUrl,
-    });
+    };
+
+    if (wantsJson) {
+      return res.json(payload);
+    }
+
+    res.send(renderSetupHtml(payload));
   } catch (err) {
     console.error("Setup error:", err.message);
-    res.status(500).json({ error: "Failed to generate TOTP secret" });
+    if (wantsJson) {
+      return res.status(500).json({ error: "Failed to generate TOTP secret" });
+    }
+    res.status(500).send("Failed to generate TOTP secret");
   }
 });
 
@@ -332,7 +413,12 @@ router.post("/credits/use", creditsUseLimiter, async (req, res) => {
       return res.json({ success: true, balance: -1, unlimited: true });
     }
 
-    const result = await useCredits(session.userId, service, creditAmount, description);
+    const result = await useCredits(
+      session.userId,
+      service,
+      creditAmount,
+      description,
+    );
     if (!result.success) {
       return res.status(402).json(result); // 402 Payment Required
     }

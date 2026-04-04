@@ -4,17 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In — auth.dhanur.me</title>
-    <meta name="description" content="Sign in to your dhanur.me account. One account for all dhanur.me services." />
+    <meta
+      name="description"
+      content="Sign in to your dhanur.me account. One account for all dhanur.me services."
+    />
 
-    
     <!-- 1. The Configuration Object (must be synchronously before shell.js) -->
     <script src="site-nav-config.js"></script>
 
     <!-- 2. The Abyssal Integration Script -->
-    <script src="https://dhanur.me/js/shell.js" defer></script>
+    <script type="module" src="https://dhanur.me/js/shell.js"></script>
   </head>
   <body>
     <!-- The shell.js will automatically wrap this main element within a .drawer context -->
+    <!-- Toast notification for admin elevation -->
+    <div id="adminToast" class="fixed top-4 right-4 z-50 hidden">
+      <div class="alert alert-success shadow-lg">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Admin access granted</span>
+      </div>
+    </div>
+
     <main
       id="app"
       class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col items-center justify-center min-h-[calc(100vh-6rem)]"
@@ -30,44 +40,50 @@
         class="state hidden flex flex-col items-center gap-4 w-full"
         id="stateLogin"
       >
-        <div class="project-card w-full md:max-w-md">
-          <div class="p-6 md:p-8">
+        <div class="dui-surface w-full md:max-w-md">
+          <div class="dui-surface-body">
             <!-- Header -->
-            <div class="text-center mb-6">
-              <div class="inline-flex items-center justify-center gap-2 mb-4">
+            <div class="dui-surface-header mb-2 mt-2">
+              <div class="inline-flex items-center justify-center gap-2 mb-2">
                 <i class="fa-solid fa-fingerprint text-base-content text-4xl"></i>
               </div>
-              <h1 class="text-3xl font-bold tracking-tight mb-2">Welcome back</h1>
-              <p class="text-base-content/85">
-                Sign in to access all <span class="font-semibold text-base-content">dhanur.me</span> services
+              <h1 class="dui-surface-title">Welcome back</h1>
+              <p class="dui-surface-subtitle">
+                Sign in to access all
+                <span class="font-bold text-base-content">dhanur.me</span>
+                services
               </p>
             </div>
 
             <!-- Security badge -->
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-200/40 border border-base-content/10 text-xs text-base-content/85 mb-6">
-              <div class="pulse-dot bg-success"></div>
-              <span>Secure single sign-on · Multi-provider</span>
+            <div class="flex items-center justify-center mb-6">
+              <span class="dui-badge"><i class="fa-solid fa-shield-halved text-[10px]"></i> Secure single sign-on</span>
             </div>
 
             <!-- Primary Provider Button -->
             <button
               id="primaryLoginBtn"
-              class="btn bg-base-content text-base-100 hover:bg-base-content/90 border-none btn-lg w-full gap-3 hidden transition-all mb-4"
+              class="dui-provider-btn hidden"
             >
-              <span id="primaryProviderIcon" class="w-5 h-5 flex-shrink-0 flex items-center justify-center"></span>
-              <span>Continue with <span id="primaryProviderName" class="font-bold"></span></span>
+              <span id="primaryProviderIcon" class="provider-icon flex items-center justify-center"></span>
+              <span>Continue with <span id="primaryProviderName"></span></span>
             </button>
 
             <!-- Divider -->
-            <div class="divider text-xs text-base-content/60 my-4 uppercase tracking-wider font-semibold" id="loginDivider">
-              other options
+            <div class="dui-divider" id="loginDivider">
+              <span class="dui-divider-text">other options</span>
             </div>
 
             <!-- Other Providers Dropdown -->
-            <details class="dropdown dropdown-top w-full" id="otherProvidersDropdown">
-              <summary class="btn btn-ghost btn-md w-full gap-2 border border-base-content/10 bg-base-200/40 hover:bg-base-200 hover:border-base-content/30 transition-colors">
+            <details
+              class="dropdown dropdown-top w-full"
+              id="otherProvidersDropdown"
+            >
+              <summary
+                class="dui-btn dui-btn-ghost w-full"
+              >
                 <i class="fa-solid fa-bars opacity-50"></i>
-                <span class="text-sm font-semibold">More providers</span>
+                <span>More providers</span>
               </summary>
               <ul
                 id="otherProvidersList"
@@ -75,11 +91,14 @@
               ></ul>
             </details>
 
-            <p class="text-sm font-semibold text-error hidden mt-4 text-center" id="loginMsg"></p>
+            <p
+              class="text-sm font-semibold text-error hidden mt-4 text-center"
+              id="loginMsg"
+            ></p>
 
             <!-- Footer hint -->
-            <p class="text-[11px] text-base-content/60 text-center mt-6">
-              By signing in, you get 100 free credits/month across all services
+            <p class="text-xs text-base-content/60 text-center mt-6">
+              Authentication includes 100 service credits per month
             </p>
           </div>
         </div>
@@ -90,68 +109,145 @@
         class="state hidden flex flex-col items-center gap-4 w-full md:max-w-3xl"
         id="stateAuthenticated"
       >
-        <div class="project-card w-full">
-          <div class="p-6 md:p-8 flex flex-col gap-6">
+        <div class="dui-surface w-full">
+          <div class="dui-surface-body gap-6">
             <!-- User info -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div
+              class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            >
               <div class="avatar">
-                <div class="w-16 h-16 rounded-full border border-base-content/20 bg-base-200 overflow-hidden">
+                <div
+                  class="w-16 h-16 rounded-full border border-base-content/20 bg-base-200 overflow-hidden"
+                >
                   <img id="userAvatar" src="" alt="" />
                 </div>
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-extrabold text-2xl truncate mb-1" id="userName"></div>
-                <div class="text-sm text-base-content/60 truncate font-mono" id="userEmail"></div>
+                <div
+                  class="font-extrabold text-2xl truncate mb-1"
+                  id="userName"
+                ></div>
+                <div
+                  class="text-sm text-base-content/60 truncate font-mono"
+                  id="userEmail"
+                ></div>
                 <div class="flex flex-wrap gap-2 mt-3">
-                  <span class="badge badge-outline border-base-content/30 text-xs font-semibold">Account Center</span>
-                  <span class="badge badge-outline border-base-content/30 text-xs font-semibold" id="linkedCountBadge">0 linked</span>
+                  <span
+                    class="badge badge-outline border-base-content/30 text-xs"
+                    >Account Center</span
+                  >
+                  <span
+                    class="badge badge-outline border-base-content/30 text-xs"
+                    id="linkedCountBadge"
+                    >0 linked</span
+                  >
                 </div>
               </div>
-              <div id="roleBadge" class="badge bg-base-content text-base-100 border-none font-bold px-3 py-3"></div>
+              <div
+                id="roleBadge"
+                class="badge badge-sm bg-base-content text-base-100 border-none font-bold"
+              ></div>
             </div>
 
             <!-- Credits display -->
-            <div class="flex items-center justify-between px-5 py-4 rounded-xl bg-base-200/40 border border-base-content/10" id="creditsDisplay">
+            <div
+              class="flex items-center justify-between px-5 py-4 rounded-xl bg-base-200/40 border border-base-content/10"
+              id="creditsDisplay"
+            >
               <div class="flex items-center gap-3">
-                <span class="text-2xl">🪙</span>
+                <i class="fa-solid fa-coins text-2xl text-base-content/70"></i>
                 <div>
-                  <div class="text-base font-bold text-base-content" id="creditsBalance">—</div>
-                  <div class="text-xs text-base-content/60 font-semibold uppercase tracking-wider mt-0.5" id="creditsLabel">credits remaining</div>
+                  <div
+                    class="text-base font-bold text-base-content"
+                    id="creditsBalance"
+                  >
+                    —
+                  </div>
+                  <div
+                    class="text-xs text-base-content/60 font-semibold uppercase tracking-wider mt-0.5"
+                    id="creditsLabel"
+                  >
+                    credits remaining
+                  </div>
                 </div>
               </div>
-              <div class="text-[10px] text-base-content/60 font-medium tracking-wide uppercase" id="creditsReset"></div>
+              <div
+                class="text-xs text-base-content/60 font-medium uppercase tracking-wide"
+                id="creditsReset"
+              ></div>
             </div>
 
             <!-- Linked accounts -->
             <div class="w-full" id="accountsSection">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 border-b border-base-content/10 pb-2">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 border-b border-base-content/10 pb-2"
+              >
                 Linked Accounts
               </h3>
               <div id="linkedAccounts" class="flex flex-col gap-2"></div>
-              <div id="availableProviders" class="flex flex-col gap-2 mt-3"></div>
+              <div
+                id="availableProviders"
+                class="flex flex-col gap-2 mt-3"
+              ></div>
             </div>
 
             <!-- Admin Dashboard -->
             <div class="w-full hidden" id="adminDashboard">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 mt-6 border-b border-base-content/10 pb-2">
+              <h3
+                class="text-xs font-bold uppercase tracking-wider text-base-content/60 mb-3 mt-6 border-b border-base-content/10 pb-2"
+              >
                 Admin Dashboard
               </h3>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" id="adminStats">
-                <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center">
-                  <div class="text-xs text-base-content/60 font-semibold uppercase mb-1">Logged-In Users</div>
-                  <div class="text-3xl font-extrabold text-base-content" id="statLoggedInUsers">-</div>
+              <div
+                class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"
+                id="adminStats"
+              >
+                <div
+                  class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center"
+                >
+                  <div
+                    class="text-xs text-base-content/60 font-semibold uppercase mb-1"
+                  >
+                    Logged-In Users
+                  </div>
+                  <div
+                    class="text-3xl font-extrabold text-base-content"
+                    id="statLoggedInUsers"
+                  >
+                    -
+                  </div>
                 </div>
-                <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center">
-                  <div class="text-xs text-base-content/60 font-semibold uppercase mb-1">Active Admins</div>
-                  <div class="text-3xl font-extrabold text-base-content" id="statActiveAdmins">-</div>
+                <div
+                  class="bg-base-200/40 border border-base-content/10 rounded-xl p-4 flex flex-col justify-center"
+                >
+                  <div
+                    class="text-xs text-base-content/60 font-semibold uppercase mb-1"
+                  >
+                    Active Admins
+                  </div>
+                  <div
+                    class="text-3xl font-extrabold text-base-content"
+                    id="statActiveAdmins"
+                  >
+                    -
+                  </div>
                 </div>
               </div>
 
-              <div class="bg-base-200/40 border border-base-content/10 rounded-xl p-5">
-                <div class="flex items-center justify-between gap-2 border-b border-base-content/10 pb-3 mb-3">
-                  <h3 class="text-sm font-bold text-base-content">Live Summary</h3>
-                  <button class="nav-button text-xs font-bold px-3 py-1.5 rounded-md hover:bg-base-200 transition-colors" id="refreshSummary">
+              <div
+                class="bg-base-200/40 border border-base-content/10 rounded-xl p-5"
+              >
+                <div
+                  class="flex items-center justify-between gap-2 border-b border-base-content/10 pb-3 mb-3"
+                >
+                  <h3 class="text-sm font-bold text-base-content">
+                    Live Summary
+                  </h3>
+                  <button
+                    class="btn btn-primary btn-xs font-bold"
+                    id="refreshSummary"
+                  >
                     <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
                   </button>
                 </div>
@@ -159,22 +255,30 @@
                   Snapshot of currently valid sessions.
                 </p>
                 <div class="mt-4 flex flex-wrap gap-2">
-                  <a href="/verify" class="btn btn-sm bg-base-content text-base-100 hover:bg-base-content/90 border-none font-bold">
-                    Re-Verify Admin
+                  <a href="/verify" class="btn btn-primary btn-sm font-bold">
+                    Restore Admin Access
                   </a>
-                  <a href="/login" class="btn btn-ghost btn-sm border border-base-content/20 hover:bg-base-200 font-bold">
+                  <a href="/login" class="btn btn-ghost btn-sm font-bold">
                     Switch Account
                   </a>
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3 w-full mt-4 pt-4 border-t border-base-content/10">
-              <button class="btn btn-sm bg-base-content text-base-100 hover:bg-base-content/90 border-none font-bold px-6" id="btnUpgrade">
-                <i class="fa-solid fa-shield-halved mr-2"></i>Upgrade to Admin
+            <div
+              class="flex flex-col sm:flex-row gap-3 w-full mt-4 pt-6 border-t border-base-content/10"
+            >
+              <button
+                class="dui-btn dui-btn-primary flex-1"
+                id="btnUpgrade"
+              >
+                <i class="fa-solid fa-shield-halved mr-1"></i> Request Admin Access
               </button>
-              <button class="btn btn-ghost btn-sm border border-base-content/20 hover:bg-base-200 font-bold px-6" id="btnLogout">
-                <i class="fa-solid fa-right-from-bracket mr-2"></i>Sign Out
+              <button
+                class="dui-btn dui-btn-ghost flex-1"
+                id="btnLogout"
+              >
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out
               </button>
             </div>
           </div>
