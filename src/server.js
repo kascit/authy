@@ -62,6 +62,15 @@ const publicDir = join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
 // Page routes — serve specific HTML files
+app.get("/.well-known/web-app-origin-association", (_req, res) => {
+  res.json({
+    web_apps: [{
+      manifest: "https://dhanur.me/icons/site.webmanifest",
+      details: { paths: ["/*"] }
+    }]
+  });
+});
+
 app.get("/login", (_req, res) => {
   res.sendFile(join(publicDir, "index.html"));
 });

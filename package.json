@@ -25,6 +25,7 @@
     "passport-oauth2": "^1.8.0",
     "passport-spotify": "^2.0.0",
     "passport-twitch-new": "^0.0.3",
+    "jsonwebtoken": "^9.0.2",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0"
   },

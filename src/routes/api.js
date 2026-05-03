@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import QRCode from "qrcode";
@@ -15,10 +16,20 @@ import {
   unlinkAccount,
   getActiveSessionSummary,
   getCredits,
+  getGuestCredits,
   useCredits,
+  useGuestCredits,
   refundCredits,
+  getAllCredits,
+  grantCredits,
+  getAllUsers,
 } from "../db.js";
 import { getEnabledProviders } from "../config/providers.js";
+import {
+  issueServiceToken,
+  serviceTokensEnabled,
+  verifyServiceToken,
+} from "../lib/service-token.js";
 
 const router = Router();
 
@@ -28,6 +39,62 @@ function getClientIp(req) {
 
 function getUserAgent(req) {
   return req.headers["user-agent"] || "unknown";
+}
+
+const GUEST_COOKIE_NAME = "authy_guest";
+
+function getBearerToken(req) {
+  const header = req.get("authorization") || "";
+  if (!header.toLowerCase().startsWith("bearer ")) return null;
+  return header.slice(7).trim() || null;
+}
+
+function getOrCreateGuestId(req, res) {
+  const existing = req.cookies?.[GUEST_COOKIE_NAME];
+  if (existing) return existing;
+
+  const generated = crypto.randomBytes(24).toString("hex");
+  const options = getCookieOptions();
+  res.cookie(GUEST_COOKIE_NAME, generated, {
+    ...options,
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+  return generated;
+}
+
+async function resolveAuthContext(req, res, { allowGuest = true } = {}) {
+  const bodyToken = req.body?.token;
+  const cookieToken = req.cookies?.authy_session;
+  const bearerToken = getBearerToken(req);
+
+  const tokenCandidates = [bodyToken, cookieToken].filter(Boolean);
+  for (const token of tokenCandidates) {
+    const session = await validateSession(token);
+    if (session) {
+      return { type: "session", session };
+    }
+  }
+
+  if (bearerToken) {
+    const servicePayload = verifyServiceToken(bearerToken);
+    if (servicePayload) {
+      return { type: "service", service: servicePayload };
+    }
+
+    const sessionFromBearer = await validateSession(bearerToken);
+    if (sessionFromBearer) {
+      return { type: "session", session: sessionFromBearer };
+    }
+  }
+
+  if (!allowGuest) return null;
+
+  const guestId = getOrCreateGuestId(req, res);
+  return { type: "guest", guestId };
+}
+
+function requireAdminSession(session) {
+  return !!session && session.role === "admin";
 }
 
 const verifyLimiter = rateLimit({
@@ -56,19 +123,32 @@ router.get("/providers", (_req, res) => {
 // GET /api/status — auth status + user info + credits
 router.get("/status", async (req, res) => {
   try {
-    const token = req.cookies?.authy_session;
-    const session = await validateSession(token);
+    const context = await resolveAuthContext(req, res, { allowGuest: true });
 
-    if (!session) {
+    if (!context || context.type === "guest") {
+      const guestCredits = await getGuestCredits(context?.guestId || getOrCreateGuestId(req, res));
       return res.json({
         authenticated: false,
         role: "guest",
         user: null,
+        credits: guestCredits,
+      });
+    }
+
+    if (context.type === "service") {
+      return res.json({
+        authenticated: true,
+        role: "service",
+        user: null,
+        service: {
+          id: context.service.sub,
+          scope: context.service.scope || [],
+        },
         credits: null,
       });
     }
 
-    // Admin gets unlimited credits, regular users get actual balance
+    const session = context.session;
     let credits = null;
     if (session.role === "admin") {
       credits = { balance: -1, unlimited: true };
@@ -76,7 +156,7 @@ router.get("/status", async (req, res) => {
       credits = await getCredits(session.userId);
     }
 
-    res.json({
+    return res.json({
       authenticated: true,
       role: session.role,
       user: {
@@ -89,7 +169,7 @@ router.get("/status", async (req, res) => {
     });
   } catch (err) {
     console.error("Status check error:", err.message);
-    res.json({
+    return res.json({
       authenticated: false,
       role: "guest",
       user: null,
@@ -327,7 +407,7 @@ router.get("/activity", async (req, res) => {
     const token = req.cookies?.authy_session;
     const session = await validateSession(token);
 
-    if (!session || session.role !== "admin") {
+    if (!requireAdminSession(session)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -346,7 +426,7 @@ router.get("/admin/summary", async (req, res) => {
     const token = req.cookies?.authy_session;
     const session = await validateSession(token);
 
-    if (!session || session.role !== "admin") {
+    if (!requireAdminSession(session)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -355,6 +435,90 @@ router.get("/admin/summary", async (req, res) => {
   } catch (err) {
     console.error("Admin summary error:", err.message);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /api/service/token — issue RS256 service token (admin only)
+router.post("/service/token", async (req, res) => {
+  try {
+    if (!serviceTokensEnabled()) {
+      return res.status(503).json({ error: "Service tokens are not configured" });
+    }
+
+    const session = await validateSession(req.cookies?.authy_session);
+    if (!requireAdminSession(session)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { service, scope, expiresIn } = req.body || {};
+    if (!service || typeof service !== "string") {
+      return res.status(400).json({ error: "Missing 'service' field" });
+    }
+
+    const token = issueServiceToken({
+      service: service.trim(),
+      scope,
+      expiresIn,
+    });
+
+    return res.json({ token, tokenType: "Bearer", algorithm: "RS256" });
+  } catch (err) {
+    console.error("Service token issue error:", err.message);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/admin/credits — list all user wallets
+router.get("/admin/credits", async (req, res) => {
+  try {
+    const session = await validateSession(req.cookies?.authy_session);
+    if (!requireAdminSession(session)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+
+    const wallets = await getAllCredits();
+    return res.json({ wallets });
+  } catch (err) {
+    console.error("Admin credits list error:", err.message);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /api/admin/credits/grant — top up a user wallet
+router.post("/admin/credits/grant", async (req, res) => {
+  try {
+    const session = await validateSession(req.cookies?.authy_session);
+    if (!requireAdminSession(session)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+
+    const userId = Number(req.body?.userId || 0);
+    const amount = Math.floor(Number(req.body?.amount || 0));
+    if (userId <= 0 || amount < 1) {
+      return res.status(400).json({ error: "Invalid userId or amount" });
+    }
+
+    const wallet = await grantCredits(userId, amount);
+    return res.json(wallet);
+  } catch (err) {
+    console.error("Admin grant credits error:", err.message);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/admin/users — list users with linked providers
+router.get("/admin/users", async (req, res) => {
+  try {
+    const session = await validateSession(req.cookies?.authy_session);
+    if (!requireAdminSession(session)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+
+    const users = await getAllUsers();
+    return res.json({ users });
+  } catch (err) {
+    console.error("Admin users list error:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -372,21 +536,29 @@ const creditsUseLimiter = rateLimit({
 // GET /api/credits — get current credit balance
 router.get("/credits", async (req, res) => {
   try {
-    const token = req.cookies?.authy_session;
-    const session = await validateSession(token);
-    if (!session) {
-      return res.status(401).json({ error: "Must be logged in" });
+    const context = await resolveAuthContext(req, res, { allowGuest: true });
+    if (!context) {
+      return res.status(401).json({ error: "Invalid session" });
     }
 
-    if (session.role === "admin") {
+    if (context.type === "guest") {
+      const credits = await getGuestCredits(context.guestId);
+      return res.json(credits);
+    }
+
+    if (context.type === "service") {
+      return res.status(400).json({ error: "Service token cannot query wallet directly" });
+    }
+
+    if (context.session.role === "admin") {
       return res.json({ balance: -1, unlimited: true });
     }
 
-    const credits = await getCredits(session.userId);
-    res.json(credits);
+    const credits = await getCredits(context.session.userId);
+    return res.json(credits);
   } catch (err) {
     console.error("Credits fetch error:", err.message);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -394,27 +566,58 @@ router.get("/credits", async (req, res) => {
 // Accepts either a cookie-based session OR a forwarded token in the body.
 router.post("/credits/use", creditsUseLimiter, async (req, res) => {
   try {
-    const { service, amount = 1, description, token: bodyToken } = req.body;
+    const { service, amount = 1, description } = req.body;
 
     if (!service || typeof service !== "string") {
       return res.status(400).json({ error: "Missing 'service' field" });
     }
     const creditAmount = Math.max(1, Math.floor(Number(amount) || 1));
 
-    // Accept token from body (cross-service) or from cookie (same-origin)
-    const sessionToken = bodyToken || req.cookies?.authy_session;
-    const session = await validateSession(sessionToken);
-    if (!session) {
-      return res.status(401).json({ error: "Invalid or expired session" });
+    const context = await resolveAuthContext(req, res, { allowGuest: true });
+    if (!context) {
+      return res.status(401).json({ error: "Invalid auth context" });
     }
 
-    // Admin has unlimited credits
-    if (session.role === "admin") {
+    if (context.type === "service") {
+      const scopes = new Set(context.service.scope || []);
+      if (!scopes.has("credits:write")) {
+        return res.status(403).json({ error: "Token scope does not allow credit operations" });
+      }
+
+      const targetUserId = Number(req.body?.userId || 0);
+      const targetGuestId = String(req.body?.guestId || "").trim();
+      if (targetUserId > 0) {
+        const result = await useCredits(targetUserId, service, creditAmount, description);
+        if (!result.success) {
+          return res.status(402).json(result);
+        }
+        return res.json(result);
+      }
+      if (targetGuestId) {
+        const result = await useGuestCredits(targetGuestId, service, creditAmount, description);
+        if (!result.success) {
+          return res.status(402).json(result);
+        }
+        return res.json(result);
+      }
+
+      return res.status(400).json({ error: "Provide userId or guestId for service token requests" });
+    }
+
+    if (context.type === "guest") {
+      const result = await useGuestCredits(context.guestId, service, creditAmount, description);
+      if (!result.success) {
+        return res.status(402).json(result);
+      }
+      return res.json(result);
+    }
+
+    if (context.session.role === "admin") {
       return res.json({ success: true, balance: -1, unlimited: true });
     }
 
     const result = await useCredits(
-      session.userId,
+      context.session.userId,
       service,
       creditAmount,
       description,
@@ -433,28 +636,45 @@ router.post("/credits/use", creditsUseLimiter, async (req, res) => {
 // POST /api/credits/refund — refund credits (for failed operations)
 router.post("/credits/refund", async (req, res) => {
   try {
-    const { service, amount = 1, token: bodyToken } = req.body;
+    const { service, amount = 1 } = req.body;
 
     if (!service || typeof service !== "string") {
       return res.status(400).json({ error: "Missing 'service' field" });
     }
     const creditAmount = Math.max(1, Math.floor(Number(amount) || 1));
 
-    const sessionToken = bodyToken || req.cookies?.authy_session;
-    const session = await validateSession(sessionToken);
-    if (!session) {
+    const context = await resolveAuthContext(req, res, { allowGuest: false });
+    if (!context) {
       return res.status(401).json({ error: "Invalid or expired session" });
     }
 
-    if (session.role === "admin") {
+    if (context.type === "service") {
+      const scopes = new Set(context.service.scope || []);
+      if (!scopes.has("credits:write")) {
+        return res.status(403).json({ error: "Token scope does not allow credit operations" });
+      }
+
+      const targetUserId = Number(req.body?.userId || 0);
+      if (targetUserId <= 0) {
+        return res.status(400).json({ error: "Provide userId for service token refunds" });
+      }
+      const result = await refundCredits(targetUserId, service, creditAmount);
+      return res.json(result);
+    }
+
+    if (context.type === "guest") {
+      return res.status(403).json({ error: "Guest refunds are not supported" });
+    }
+
+    if (context.session.role === "admin") {
       return res.json({ success: true, balance: -1, unlimited: true });
     }
 
-    const result = await refundCredits(session.userId, service, creditAmount);
-    res.json(result);
+    const result = await refundCredits(context.session.userId, service, creditAmount);
+    return res.json(result);
   } catch (err) {
     console.error("Credit refund error:", err.message);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 

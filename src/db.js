@@ -2,6 +2,16 @@ import { createClient } from "@libsql/client";
 
 let db;
 
+const DEFAULT_USER_MONTHLY_CREDITS = 100;
+const GUEST_MONTHLY_CREDITS = Math.max(
+  1,
+  parseInt(process.env.GUEST_MONTHLY_CREDITS || "30", 10) || 30,
+);
+const GUEST_LINKR_DAILY_LIMIT = Math.max(
+  1,
+  parseInt(process.env.GUEST_LINKR_DAILY_LIMIT || "3", 10) || 3,
+);
+
 export function getDb() {
   if (!db) {
     db = createClient({
@@ -116,6 +126,34 @@ export async function initDb() {
           period_start TEXT NOT NULL DEFAULT (datetime('now', 'start of month')),
           updated_at TEXT DEFAULT (datetime('now'))
         )`,
+        args: [],
+      },
+      // --- Guest Credits ---
+      {
+        sql: `CREATE TABLE IF NOT EXISTS guest_wallets (
+          guest_id TEXT PRIMARY KEY,
+          balance INTEGER NOT NULL,
+          period_start TEXT NOT NULL DEFAULT (datetime('now', 'start of month')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`,
+        args: [],
+      },
+      {
+        sql: `CREATE TABLE IF NOT EXISTS guest_daily_usage (
+          guest_id TEXT NOT NULL,
+          service TEXT NOT NULL,
+          usage_date TEXT NOT NULL,
+          count INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (guest_id, service, usage_date)
+        )`,
+        args: [],
+      },
+      {
+        sql: `CREATE INDEX IF NOT EXISTS idx_guest_wallets_period ON guest_wallets(period_start)`,
+        args: [],
+      },
+      {
+        sql: `CREATE INDEX IF NOT EXISTS idx_guest_usage_lookup ON guest_daily_usage(service, usage_date)`,
         args: [],
       },
     ],
@@ -373,8 +411,8 @@ export async function initCreditsForUser(userId) {
   const client = getDb();
   await client.execute({
     sql: `INSERT OR IGNORE INTO credits (user_id, balance, period_start)
-          VALUES (?, 100, datetime('now', 'start of month'))`,
-    args: [userId],
+          VALUES (?, ?, datetime('now', 'start of month'))`,
+    args: [userId, DEFAULT_USER_MONTHLY_CREDITS],
   });
 }
 
@@ -392,7 +430,9 @@ export async function getCredits(userId) {
     args: [userId],
   });
   const credit = row.rows[0];
-  if (!credit) return { balance: 100, periodStart: null, periodEnd: null };
+  if (!credit) {
+    return { balance: DEFAULT_USER_MONTHLY_CREDITS, periodStart: null, periodEnd: null };
+  }
 
   const periodStart = new Date(credit.period_start + "Z");
   const currentMonthStart = new Date();
@@ -402,13 +442,13 @@ export async function getCredits(userId) {
   // If the stored period is before the current month, reset
   if (periodStart < currentMonthStart) {
     await client.execute({
-      sql: `UPDATE credits SET balance = 100, period_start = datetime('now', 'start of month'), updated_at = datetime('now') WHERE user_id = ?`,
-      args: [userId],
+      sql: `UPDATE credits SET balance = ?, period_start = datetime('now', 'start of month'), updated_at = datetime('now') WHERE user_id = ?`,
+      args: [DEFAULT_USER_MONTHLY_CREDITS, userId],
     });
     const nextMonth = new Date(currentMonthStart);
     nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
     return {
-      balance: 100,
+      balance: DEFAULT_USER_MONTHLY_CREDITS,
       periodStart: currentMonthStart.toISOString(),
       periodEnd: nextMonth.toISOString(),
     };
@@ -422,6 +462,127 @@ export async function getCredits(userId) {
     periodStart: periodStart.toISOString(),
     periodEnd: periodEnd.toISOString(),
   };
+}
+
+export async function initGuestWallet(guestId) {
+  const client = getDb();
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO guest_wallets (guest_id, balance, period_start)
+          VALUES (?, ?, datetime('now', 'start of month'))`,
+    args: [guestId, GUEST_MONTHLY_CREDITS],
+  });
+}
+
+export async function getGuestCredits(guestId) {
+  const client = getDb();
+  await initGuestWallet(guestId);
+
+  const row = await client.execute({
+    sql: `SELECT balance, period_start FROM guest_wallets WHERE guest_id = ?`,
+    args: [guestId],
+  });
+  const wallet = row.rows[0];
+  if (!wallet) {
+    return {
+      balance: GUEST_MONTHLY_CREDITS,
+      periodStart: null,
+      periodEnd: null,
+      guest: true,
+    };
+  }
+
+  const periodStart = new Date(wallet.period_start + "Z");
+  const currentMonthStart = new Date();
+  currentMonthStart.setUTCDate(1);
+  currentMonthStart.setUTCHours(0, 0, 0, 0);
+
+  if (periodStart < currentMonthStart) {
+    await client.execute({
+      sql: `UPDATE guest_wallets SET balance = ?, period_start = datetime('now', 'start of month'), updated_at = datetime('now') WHERE guest_id = ?`,
+      args: [GUEST_MONTHLY_CREDITS, guestId],
+    });
+    const nextMonth = new Date(currentMonthStart);
+    nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+    return {
+      balance: GUEST_MONTHLY_CREDITS,
+      periodStart: currentMonthStart.toISOString(),
+      periodEnd: nextMonth.toISOString(),
+      guest: true,
+    };
+  }
+
+  const periodEnd = new Date(periodStart);
+  periodEnd.setUTCMonth(periodEnd.getUTCMonth() + 1);
+
+  return {
+    balance: Number(wallet.balance),
+    periodStart: periodStart.toISOString(),
+    periodEnd: periodEnd.toISOString(),
+    guest: true,
+  };
+}
+
+async function incrementGuestDailyUsage(guestId, service, amount) {
+  const client = getDb();
+  await client.execute({
+    sql: `INSERT INTO guest_daily_usage (guest_id, service, usage_date, count)
+          VALUES (?, ?, date('now'), ?)
+          ON CONFLICT(guest_id, service, usage_date)
+          DO UPDATE SET count = count + excluded.count`,
+    args: [guestId, service, amount],
+  });
+}
+
+async function getGuestDailyUsage(guestId, service) {
+  const client = getDb();
+  const result = await client.execute({
+    sql: `SELECT count FROM guest_daily_usage
+          WHERE guest_id = ? AND service = ? AND usage_date = date('now')`,
+    args: [guestId, service],
+  });
+  return Number(result.rows?.[0]?.count || 0);
+}
+
+export async function useGuestCredits(guestId, service, amount = 1, description = null) {
+  const client = getDb();
+  await initGuestWallet(guestId);
+  await getGuestCredits(guestId);
+
+  if (service === "linkr") {
+    const usedToday = await getGuestDailyUsage(guestId, service);
+    if (usedToday + amount > GUEST_LINKR_DAILY_LIMIT) {
+      const current = await getGuestCredits(guestId);
+      return {
+        success: false,
+        balance: current.balance,
+        error: `Guest daily limit reached for ${service}`,
+        code: "GUEST_DAILY_LIMIT",
+        limit: GUEST_LINKR_DAILY_LIMIT,
+      };
+    }
+  }
+
+  const result = await client.execute({
+    sql: `UPDATE guest_wallets SET balance = balance - ?, updated_at = datetime('now')
+          WHERE guest_id = ? AND balance >= ?`,
+    args: [amount, guestId, amount],
+  });
+
+  if (result.rowsAffected === 0) {
+    const current = await getGuestCredits(guestId);
+    return { success: false, balance: current.balance, error: "Insufficient guest credits" };
+  }
+
+  await incrementGuestDailyUsage(guestId, service, amount);
+
+  await client.execute({
+    sql: `INSERT INTO activity_log (action, success, details)
+          VALUES ('guest_credit_use', 1, ?)`,
+    args: [JSON.stringify({ guestId, service, amount, description })],
+  });
+
+  const current = await getGuestCredits(guestId);
+  return { success: true, balance: current.balance, guest: true };
 }
 
 /**
@@ -476,4 +637,48 @@ export async function refundCredits(userId, service, amount = 1) {
 
   const current = await getCredits(userId);
   return { success: true, balance: current.balance };
+}
+
+export async function getAllCredits() {
+  const client = getDb();
+  const result = await client.execute({
+    sql: `SELECT c.user_id, c.balance, c.period_start, c.updated_at,
+                 u.email, u.name, u.avatar_url
+          FROM credits c
+          JOIN users u ON c.user_id = u.id
+          ORDER BY c.updated_at DESC`,
+    args: [],
+  });
+  return result.rows;
+}
+
+export async function grantCredits(userId, amount) {
+  const client = getDb();
+  await initCreditsForUser(userId);
+  await client.execute({
+    sql: `UPDATE credits SET balance = balance + ?, updated_at = datetime('now') WHERE user_id = ?`,
+    args: [amount, userId],
+  });
+
+  await client.execute({
+    sql: `INSERT INTO activity_log (action, user_id, success, details)
+          VALUES ('credit_grant', ?, 1, ?)`,
+    args: [userId, JSON.stringify({ amount, grantedBy: "admin" })],
+  });
+
+  return getCredits(userId);
+}
+
+export async function getAllUsers() {
+  const client = getDb();
+  const result = await client.execute({
+    sql: `SELECT u.id, u.email, u.name, u.avatar_url, u.created_at, u.updated_at,
+                 GROUP_CONCAT(a.provider) as providers
+          FROM users u
+          LEFT JOIN accounts a ON u.id = a.user_id
+          GROUP BY u.id
+          ORDER BY u.created_at DESC`,
+    args: [],
+  });
+  return result.rows;
 }
