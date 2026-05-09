@@ -8,4 +8,6 @@ window.SiteNavConfig = {
   showSearch: false,
   showAppsGrid: true,
   showThemeToggle: true,
+  enablePwa: false,
+  favicon: false,
 };
