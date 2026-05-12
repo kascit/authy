@@ -227,6 +227,7 @@ router.post("/verify", verifyLimiter, async (req, res) => {
         "totp_verify",
         ip,
         ua,
+        import rateLimit, { ipKeyGenerator } from "express-rate-limit";
         false,
         `Server error: ${err.message}`,
       );
@@ -234,7 +235,7 @@ router.post("/verify", verifyLimiter, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
+          keyGenerator: (req) => ipKeyGenerator(req),
 function renderSetupHtml({ secret_base32, otpauth_url, qr_code }) {
   return `<!doctype html>
 <html lang="en">
@@ -243,7 +244,7 @@ function renderSetupHtml({ secret_base32, otpauth_url, qr_code }) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TOTP Setup — auth.dhanur.me</title>
   <script src="/site-nav-config.js"></script>
-  <script type="module" src="https://dhanur.me/js/shell.js"></script>
+          keyGenerator: (req) => ipKeyGenerator(req),
 </head>
 <body>
   <main id="app" class="w-full max-w-7xl mx-auto p-4 lg:p-8 flex items-center justify-center min-h-[calc(100vh-6rem)]">
