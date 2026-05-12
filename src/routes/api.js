@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { Router } from "express";
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import QRCode from "qrcode";
 import {
   validateSession,
@@ -103,7 +103,6 @@ const verifyLimiter = rateLimit({
   message: { error: "Too many attempts. Try again in 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => ipKeyGenerator(req),
 });
 
 // GET /api/health
@@ -126,7 +125,9 @@ router.get("/status", async (req, res) => {
     const context = await resolveAuthContext(req, res, { allowGuest: true });
 
     if (!context || context.type === "guest") {
-      const guestCredits = await getGuestCredits(context?.guestId || getOrCreateGuestId(req, res));
+      const guestCredits = await getGuestCredits(
+        context?.guestId || getOrCreateGuestId(req, res),
+      );
       return res.json({
         authenticated: false,
         role: "guest",
@@ -441,7 +442,9 @@ router.get("/admin/summary", async (req, res) => {
 router.post("/service/token", async (req, res) => {
   try {
     if (!serviceTokensEnabled()) {
-      return res.status(503).json({ error: "Service tokens are not configured" });
+      return res
+        .status(503)
+        .json({ error: "Service tokens are not configured" });
     }
 
     const session = await validateSession(req.cookies?.authy_session);
@@ -529,7 +532,6 @@ const creditsUseLimiter = rateLimit({
   message: { error: "Too many credit requests. Slow down." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => ipKeyGenerator(req),
 });
 
 // GET /api/credits — get current credit balance
@@ -546,7 +548,9 @@ router.get("/credits", async (req, res) => {
     }
 
     if (context.type === "service") {
-      return res.status(400).json({ error: "Service token cannot query wallet directly" });
+      return res
+        .status(400)
+        .json({ error: "Service token cannot query wallet directly" });
     }
 
     if (context.session.role === "admin") {
@@ -580,31 +584,50 @@ router.post("/credits/use", creditsUseLimiter, async (req, res) => {
     if (context.type === "service") {
       const scopes = new Set(context.service.scope || []);
       if (!scopes.has("credits:write")) {
-        return res.status(403).json({ error: "Token scope does not allow credit operations" });
+        return res
+          .status(403)
+          .json({ error: "Token scope does not allow credit operations" });
       }
 
       const targetUserId = Number(req.body?.userId || 0);
       const targetGuestId = String(req.body?.guestId || "").trim();
       if (targetUserId > 0) {
-        const result = await useCredits(targetUserId, service, creditAmount, description);
+        const result = await useCredits(
+          targetUserId,
+          service,
+          creditAmount,
+          description,
+        );
         if (!result.success) {
           return res.status(402).json(result);
         }
         return res.json(result);
       }
       if (targetGuestId) {
-        const result = await useGuestCredits(targetGuestId, service, creditAmount, description);
+        const result = await useGuestCredits(
+          targetGuestId,
+          service,
+          creditAmount,
+          description,
+        );
         if (!result.success) {
           return res.status(402).json(result);
         }
         return res.json(result);
       }
 
-      return res.status(400).json({ error: "Provide userId or guestId for service token requests" });
+      return res.status(400).json({
+        error: "Provide userId or guestId for service token requests",
+      });
     }
 
     if (context.type === "guest") {
-      const result = await useGuestCredits(context.guestId, service, creditAmount, description);
+      const result = await useGuestCredits(
+        context.guestId,
+        service,
+        creditAmount,
+        description,
+      );
       if (!result.success) {
         return res.status(402).json(result);
       }
@@ -650,12 +673,16 @@ router.post("/credits/refund", async (req, res) => {
     if (context.type === "service") {
       const scopes = new Set(context.service.scope || []);
       if (!scopes.has("credits:write")) {
-        return res.status(403).json({ error: "Token scope does not allow credit operations" });
+        return res
+          .status(403)
+          .json({ error: "Token scope does not allow credit operations" });
       }
 
       const targetUserId = Number(req.body?.userId || 0);
       if (targetUserId <= 0) {
-        return res.status(400).json({ error: "Provide userId for service token refunds" });
+        return res
+          .status(400)
+          .json({ error: "Provide userId for service token refunds" });
       }
       const result = await refundCredits(targetUserId, service, creditAmount);
       return res.json(result);
@@ -669,7 +696,11 @@ router.post("/credits/refund", async (req, res) => {
       return res.json({ success: true, balance: -1, unlimited: true });
     }
 
-    const result = await refundCredits(context.session.userId, service, creditAmount);
+    const result = await refundCredits(
+      context.session.userId,
+      service,
+      creditAmount,
+    );
     return res.json(result);
   } catch (err) {
     console.error("Credit refund error:", err.message);
