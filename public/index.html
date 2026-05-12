@@ -741,6 +741,7 @@
                   <button
                     class="btn btn-primary btn-xs font-bold"
                     id="refreshSummary"
+                    data-action="refresh-summary"
                   >
                     <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
                   </button>
@@ -762,11 +763,11 @@
             <div
               class="flex flex-col sm:flex-row gap-3 w-full mt-4 pt-6 border-t border-base-content/10"
             >
-              <button class="btn btn-primary flex-1" id="btnUpgrade">
+              <button class="btn btn-primary flex-1" id="btnUpgrade" data-action="request-admin">
                 <i class="fa-solid fa-shield-halved mr-1"></i> Request Admin
                 Access
               </button>
-              <button class="btn btn-ghost flex-1" id="btnLogout">
+              <button class="btn btn-ghost flex-1" id="btnLogout" data-action="logout">
                 <i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out
               </button>
             </div>

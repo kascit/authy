@@ -13,6 +13,26 @@
       return;
     }
 
+    var btn = e.target.closest('[data-action]');
+    if(btn){
+      var action = btn.getAttribute('data-action');
+      if(action === 'request-admin' && window.__authy?.requestAdmin){
+        e.preventDefault();
+        window.__authy.requestAdmin();
+        return;
+      }
+      if(action === 'logout' && window.__authy?.logout){
+        e.preventDefault();
+        window.__authy.logout();
+        return;
+      }
+      if(action === 'refresh-summary' && window.__authy?.refreshAdminSummary){
+        e.preventDefault();
+        window.__authy.refreshAdminSummary();
+        return;
+      }
+    }
+
     var toggle = e.target.closest('#shell-mobile-toggle');
     if(toggle){
       var panel = document.querySelector('[data-shell-mobile-panel]');

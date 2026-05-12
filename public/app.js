@@ -174,17 +174,6 @@
     }
 
     btnUpgrade.style.display = data.role === "admin" ? "none" : "";
-    btnUpgrade.onclick = function () {
-      window.location.href = "/verify";
-    };
-
-    btnLogout.onclick = async function () {
-      await fetch(API + "/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      window.location.href = "/login";
-    };
 
     show(stateAuthenticated);
     loadAccounts();
@@ -372,14 +361,7 @@
     loadAdminSummary();
 
     var refreshBtn = document.getElementById("refreshSummary");
-    if (refreshBtn) {
-      refreshBtn.onclick = function () {
-        refreshBtn.disabled = true;
-        loadAdminSummary().then(function () {
-          refreshBtn.disabled = false;
-        });
-      };
-    }
+    // Event listener attached by site-bindings.js
   }
 
   async function loadAdminSummary() {
@@ -400,6 +382,31 @@
       document.getElementById("statLoggedInUsers").textContent = "-";
       document.getElementById("statActiveAdmins").textContent = "-";
     }
+  }
+
+  // Expose functions on window for CSP-safe delegated handlers
+  window.__authy = window.__authy || {};
+  window.__authy.requestAdmin = function() {
+    window.location.href = "/verify";
+  };
+  window.__authy.logout = async function() {
+    try {
+      await fetch(API + "/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch(e) {}
+    window.location.href = "/login";
+  };
+  window.__authy.refreshAdminSummary = async function() {
+    var btn = document.getElementById("refreshSummary");
+    if(!btn) return;
+    btn.disabled = true;
+    try {
+      await loadAdminSummary();
+    } catch(e) {}
+    btn.disabled = false;
+  };
   }
 
   // ==================== Toast ====================
