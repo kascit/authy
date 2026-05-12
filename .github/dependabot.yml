@@ -10,9 +10,15 @@ updates:
     target-branch: "main"
     open-pull-requests-limit: 3
     rebase-strategy: "auto"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
     commit-message:
       prefix: "chore"
       include: "scope"
+    labels:
+      - "dependencies"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -23,6 +29,13 @@ updates:
     target-branch: "main"
     open-pull-requests-limit: 3
     rebase-strategy: "auto"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     commit-message:
       prefix: "chore"
       include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
