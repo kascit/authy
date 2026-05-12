@@ -386,28 +386,27 @@
 
   // Expose functions on window for CSP-safe delegated handlers
   window.__authy = window.__authy || {};
-  window.__authy.requestAdmin = function() {
+  window.__authy.requestAdmin = function () {
     window.location.href = "/verify";
   };
-  window.__authy.logout = async function() {
+  window.__authy.logout = async function () {
     try {
       await fetch(API + "/api/logout", {
         method: "POST",
         credentials: "include",
       });
-    } catch(e) {}
+    } catch (e) {}
     window.location.href = "/login";
   };
-  window.__authy.refreshAdminSummary = async function() {
+  window.__authy.refreshAdminSummary = async function () {
     var btn = document.getElementById("refreshSummary");
-    if(!btn) return;
+    if (!btn) return;
     btn.disabled = true;
     try {
       await loadAdminSummary();
-    } catch(e) {}
+    } catch (e) {}
     btn.disabled = false;
   };
-  }
 
   // ==================== Toast ====================
 
