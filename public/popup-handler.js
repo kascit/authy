@@ -1,6 +1,4 @@
-// Popup callback handler — externalized from inline script
 (function () {
-  // Setup close button listener FIRST (before any early returns)
   var btnClose = document.getElementById("btnClose");
   if (btnClose) {
     btnClose.addEventListener("click", function () {
@@ -13,7 +11,6 @@
     document.getElementById("stateLoading").classList.add("hidden");
     document.getElementById("stateError").classList.remove("hidden");
 
-    // Auto-close countdown
     var countdownEl = document.getElementById("closeCountdown");
     var seconds = 3;
     var interval = setInterval(function () {
@@ -28,18 +25,31 @@
     if (window.opener) {
       window.opener.postMessage(
         { type: "auth-error", error: params.get("error") },
-        "*",
+        "*"
       );
     }
     return;
   }
 
+  // Handle successful authorization loop
   if (window.opener) {
+    // 1. Listen for dynamic refresh completion acknowledgment from opener
+    window.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "auth-ack-close") {
+        window.close();
+      }
+    });
+
+    // 2. Dispatch success state to trigger opener data fetch
     window.opener.postMessage({ type: "auth-login-success" }, "*");
+
+    // 3. Fallback automated termination to catch unacknowledged messages
     setTimeout(function () {
       window.close();
-    }, 300);
+    }, 1500);
   } else {
+    // COOP policy stripped window.opener reference during multi-hop redirect.
+    // Fall back to top-level navigation.
     window.location.href = "/";
   }
 })();
