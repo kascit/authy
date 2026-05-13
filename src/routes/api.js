@@ -243,7 +243,7 @@ function renderSetupHtml({ secret_base32, otpauth_url, qr_code }) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>auth | dhanur.me</title>
-  <link rel="icon" href="https://raw.githubusercontent.com/kascit/kascit.github.io/raw-mirror/static/icons/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="https://raw.githubusercontent.com/kascit/kascit.github.io/raw-mirror/icons/favicon.svg" type="image/x-icon" />
   <script src="/site-nav-config.js"></script>
 </head>
 <body>

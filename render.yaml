@@ -3,7 +3,7 @@ services:
     name: authy
     runtime: node
     plan: free
-    buildCommand: pnpm install
+    buildCommand: pnpm install --frozen-lockfile
     startCommand: pnpm start
     healthCheckPath: /api/health
     envVars:

@@ -28,12 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Syntax checks
+      - name: Full syntax checks
         run: |
-          node --check src/server.js
-          node --check src/routes/api.js
-          node --check src/db.js
-          node --check src/lib/service-token.js
+          find src -name '*.js' -print0 | xargs -0 -n1 node --check
 
   deploy-render:
     name: Deploy to Render
