@@ -3,42 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Authenticating - auth.dhanur.me</title>
+    <title>auth | dhanur.me</title>
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/kascit/kascit.github.io/raw-mirror/static/icons/favicon.ico"
+      type="image/x-icon"
+    />
 
     <!-- Trusted Types default policy (must run before ANY script that uses innerHTML/script.src) -->
     <script>
-    (function(){
-      if (window.trustedTypes && window.trustedTypes.createPolicy) {
-        try {
-          window.__defaultPolicy = window.trustedTypes.createPolicy('default', {
-            createScriptURL: function(s) { return s; },
-            createHTML: function(s) { return s; }
-          });
-        } catch(e) {}
-      }
-      function installFramePolicy(m) {
-        var orig = Element.prototype[m];
-        Element.prototype[m] = function() {
-          var r = orig.apply(this, arguments);
-          var n = arguments[0];
-          if (n && n.tagName === 'IFRAME') {
-            try {
-              var w = n.contentWindow;
-              if (w && w.trustedTypes && !w.trustedTypes.defaultPolicy) {
-                w.trustedTypes.createPolicy('default', {
-                  createHTML: function(s){return s},
-                  createScript: function(s){return s},
-                  createScriptURL: function(s){return s}
-                });
-              }
-            } catch(e) {}
-          }
-          return r;
-        };
-      }
-      installFramePolicy('appendChild');
-      installFramePolicy('insertBefore');
-    })();
+      (function () {
+        if (window.trustedTypes && window.trustedTypes.createPolicy) {
+          try {
+            window.__defaultPolicy = window.trustedTypes.createPolicy(
+              "default",
+              {
+                createScriptURL: function (s) {
+                  return s;
+                },
+                createHTML: function (s) {
+                  return s;
+                },
+              },
+            );
+          } catch (e) {}
+        }
+        function installFramePolicy(m) {
+          var orig = Element.prototype[m];
+          Element.prototype[m] = function () {
+            var r = orig.apply(this, arguments);
+            var n = arguments[0];
+            if (n && n.tagName === "IFRAME") {
+              try {
+                var w = n.contentWindow;
+                if (w && w.trustedTypes && !w.trustedTypes.defaultPolicy) {
+                  w.trustedTypes.createPolicy("default", {
+                    createHTML: function (s) {
+                      return s;
+                    },
+                    createScript: function (s) {
+                      return s;
+                    },
+                    createScriptURL: function (s) {
+                      return s;
+                    },
+                  });
+                }
+              } catch (e) {}
+            }
+            return r;
+          };
+        }
+        installFramePolicy("appendChild");
+        installFramePolicy("insertBefore");
+      })();
     </script>
 
     <script src="popup-nav-config.js"></script>
