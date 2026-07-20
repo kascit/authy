@@ -9,12 +9,12 @@
     "dev": "node --watch src/server.js"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.3",
+    "@libsql/client": "^0.17.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.5.1",
+    "express-rate-limit": "^8.6.0",
     "passport": "^0.7.0",
     "passport-apple": "^2.0.2",
     "passport-discord-auth": "^1.2.0",
