@@ -50,6 +50,6 @@
   } else {
     // COOP policy stripped window.opener reference during multi-hop redirect.
     // Fall back to top-level navigation.
-    window.location.href = "/";
+    window.close();
   }
 })();

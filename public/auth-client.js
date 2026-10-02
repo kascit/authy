@@ -113,7 +113,16 @@
     },
 
     login: function () {
-      openPopup(AUTH_ORIGIN + "/login?popup=true");
+      var popup = openPopup(AUTH_ORIGIN + "/login?popup=true");
+      if (!popup) return;
+      var timer = setInterval(function() {
+        if (popup.closed) {
+          clearInterval(timer);
+          refreshStatus().then(function () {
+            document.dispatchEvent(new CustomEvent("authChanged", { detail: _status }));
+          });
+        }
+      }, 500);
     },
 
     logout: async function () {
@@ -133,7 +142,16 @@
     },
 
     upgrade: function () {
-      openPopup(AUTH_ORIGIN + "/verify?popup=true");
+      var popup = openPopup(AUTH_ORIGIN + "/verify?popup=true");
+      if (!popup) return;
+      var timer = setInterval(function() {
+        if (popup.closed) {
+          clearInterval(timer);
+          refreshStatus().then(function () {
+            document.dispatchEvent(new CustomEvent("authChanged", { detail: _status }));
+          });
+        }
+      }, 500);
     },
 
     /**
